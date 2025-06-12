@@ -1,21 +1,21 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_REPO = 'grobkardev/jenkins-docker-task'
-        DOCKER_CREDENTIALS_ID = 'DockerHub'
+        DOCKER_HUB_REPO = 'grobkardev/jenkins-docker-task' // DockerHub repository
+        DOCKER_CREDENTIALS_ID = 'DockerHub'  // Jenkins credentials ID
     }
     stages {
         stage('Checkout Code') {
             steps {
-                script {
-                    checkout scm
-                }
+                checkout scm
             }
         }
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t ${DOCKER_HUB_REPO}:latest .'
+                    bat '''
+                    docker build -t %DOCKER_HUB_REPO%:latest .
+                    '''
                 }
             }
         }
@@ -27,9 +27,9 @@ pipeline {
                         usernameVariable: 'DOCKER_USERNAME',
                         passwordVariable: 'DOCKER_PASSWORD')]) {
 
-                        sh '''
-                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                            docker push ${DOCKER_HUB_REPO}:latest
+                        bat '''
+                        echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin
+                        docker push %DOCKER_HUB_REPO%:latest
                         '''
                     }
                 }
@@ -41,7 +41,7 @@ pipeline {
             echo 'Docker image built and pushed successfully!'
         }
         failure {
-            echo 'Docker build or push failed. Check logs for errors.'
+            echo 'Pipeline failed. Check logs for errors.'
         }
     }
 }
