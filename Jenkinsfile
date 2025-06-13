@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_REPO = 'your-dockerhub-username/your-repo-name' // Replace with your DockerHub repository
-        DOCKER_CREDENTIALS_ID = 'dockerhub'                       // Replace with your credentials ID
+        KUBERNETES_CREDENTIALS_ID = 'kubeconfig'
     }
     stages {
         stage('Checkout Code') {
@@ -10,21 +9,14 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build Docker Image') {
+        stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    bat "docker build -t ${DOCKER_HUB_REPO}:latest ."
-                }
-            }
-        }
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        bat """
-                            echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin
-                            docker push ${DOCKER_HUB_REPO}:latest
-                        """
+                    withKubeConfig([credentialsId: "${KUBERNETES_CREDENTIALS_ID}"]) {
+                        sh '''
+                            kubectl apply -f deployment.yaml
+                            kubectl apply -f service.yaml
+                        '''
                     }
                 }
             }
@@ -32,10 +24,10 @@ pipeline {
     }
     post {
         success {
-            echo 'Docker image was built and pushed successfully!'
+            echo 'Successfully deployed to Kubernetes!'
         }
         failure {
-            echo 'Pipeline failed. Check logs for errors.'
+            echo 'Deployment failed. Check logs for errors.'
         }
     }
 }
