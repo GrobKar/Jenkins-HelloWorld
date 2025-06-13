@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: my-app-container
-        image: grobkardev/jenkins-docker-task:latest # Replace with your DockerHub image
+        image: grobkardev/jenkins-docker-task:latest
         ports:
         - containerPort: 80
